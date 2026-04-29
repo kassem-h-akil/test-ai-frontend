@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { fetchItems } from '../api.js'
+import { fetchItems, deleteItem } from '../api.js'
+import ItemForm from './ItemForm.jsx'
+import Modal from './Modal.jsx'
 
 const initialFilters = {
   name: '',
@@ -28,6 +30,9 @@ export default function ItemsTable() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -65,14 +70,65 @@ export default function ItemsTable() {
     setTimeout(load, 0)
   }
 
+  const openAdd = () => {
+    setEditingItem(null)
+    setShowForm(true)
+  }
+
+  const openEdit = (item) => {
+    setEditingItem(item)
+    setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingItem(null)
+  }
+
+  const onSaved = () => {
+    closeForm()
+    load()
+  }
+
+  const onDelete = async (item) => {
+    const ok = window.confirm(
+      `Delete "${item.name}" (id ${item.id})? This cannot be undone.`,
+    )
+    if (!ok) return
+    setDeletingId(item.id)
+    setError(null)
+    try {
+      await deleteItem(item.id)
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <section className="items">
       <div className="items-head">
         <h2>Store items</h2>
-        <button type="button" className="btn btn-ghost" onClick={load} disabled={loading}>
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div className="items-head-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={openAdd}
+            disabled={showForm}
+          >
+            + Add item
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={load} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
+
+      <Modal open={showForm} onClose={closeForm}>
+        <ItemForm item={editingItem} onSaved={onSaved} onCancel={closeForm} />
+      </Modal>
 
       <form className="filters" onSubmit={onSubmit}>
         <label>
@@ -111,7 +167,7 @@ export default function ItemsTable() {
         </div>
       </form>
 
-      {error && <p className="error">Could not load items: {error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <div className="table-wrap">
         <table className="datatable">
@@ -121,12 +177,13 @@ export default function ItemsTable() {
               <th>Name</th>
               <th>Description</th>
               <th style={{ width: '200px' }}>Created date</th>
+              <th style={{ width: '160px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {!loading && items.length === 0 && (
               <tr>
-                <td colSpan={4} className="empty">No items match these filters.</td>
+                <td colSpan={5} className="empty">No items match these filters.</td>
               </tr>
             )}
             {items.map((it) => (
@@ -135,6 +192,24 @@ export default function ItemsTable() {
                 <td>{it.name}</td>
                 <td>{it.description}</td>
                 <td>{formatDate(it.created_date)}</td>
+                <td className="row-actions">
+                  <button
+                    type="button"
+                    className="btn-row"
+                    onClick={() => openEdit(it)}
+                    disabled={deletingId === it.id}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-row btn-row-danger"
+                    onClick={() => onDelete(it)}
+                    disabled={deletingId === it.id}
+                  >
+                    {deletingId === it.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -14,3 +14,37 @@ export async function fetchItems(filters = {}) {
   }
   return res.json()
 }
+
+export async function createItem({ name, description }) {
+  const res = await fetch(`${API_BASE}/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, description: description ?? '' }),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Create failed: ${res.status}${text ? ` ${text}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateItem(id, { name, description }) {
+  const res = await fetch(`${API_BASE}/items/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, description: description ?? '' }),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Update failed: ${res.status}${text ? ` ${text}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteItem(id) {
+  const res = await fetch(`${API_BASE}/items/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Delete failed: ${res.status}${text ? ` ${text}` : ''}`)
+  }
+}
