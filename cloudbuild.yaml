@@ -17,7 +17,7 @@ substitutions:
   _SERVICE_NAME: testai-frontend
   _REGION: us-central1
   _AR_REPO: testai
-  _API_BASE_URL: 'https://testai-backend-125441287300.us-central1.run.app'   # e.g. https://testai-backend-xxxx-uc.a.run.app/api
+  _API_BASE_URL: 'https://testai-backend-125441287300.us-central1.run.app/api'   # e.g. https://testai-backend-xxxx-uc.a.run.app/api
 
 steps:
   - id: build
